@@ -1,12 +1,14 @@
 import Phaser from 'phaser';
 import { GameConfig, COLORS } from '../game/GameConfig';
 import { soundManager } from '../utils/SoundManager';
+import { ChallengeDef } from '../utils/ChallengeManager';
 
 interface GameOverData {
   score: number;
   highScore: number;
   isNewHighScore: boolean;
   isMuted: boolean;
+  challengeDefs?: ChallengeDef[];
 }
 
 export class GameOverScene extends Phaser.Scene {
@@ -14,6 +16,7 @@ export class GameOverScene extends Phaser.Scene {
   private highScore: number = 0;
   private isNewHighScore: boolean = false;
   private isMuted: boolean = false;
+  private challengeDefs: ChallengeDef[] = [];
   private restartButton: Phaser.GameObjects.Text | null = null;
   private menuButton: Phaser.GameObjects.Text | null = null;
 
@@ -26,6 +29,7 @@ export class GameOverScene extends Phaser.Scene {
     this.highScore = data.highScore;
     this.isNewHighScore = data.isNewHighScore;
     this.isMuted = data.isMuted;
+    this.challengeDefs = data.challengeDefs || [];
     soundManager.setMuted(this.isMuted);
   }
 
@@ -33,6 +37,7 @@ export class GameOverScene extends Phaser.Scene {
     this.createBackground();
     this.createGameOverText();
     this.createScoreDisplay();
+    this.createChallengeResult();
     this.createButtons();
     this.setupInput();
 
@@ -169,10 +174,50 @@ export class GameOverScene extends Phaser.Scene {
     highScoreLabel.setStroke('#000000', 2);
   }
 
+  private createChallengeResult(): void {
+    if (this.challengeDefs.length === 0) return;
+
+    const panelY = 335;
+    const panelHeight = 30 + this.challengeDefs.length * 22;
+    const panelWidth = 360;
+    const panelX = GameConfig.WIDTH / 2 - panelWidth / 2;
+
+    const panel = this.add.graphics();
+    panel.fillStyle(0x1A1A2E, 0.85);
+    panel.lineStyle(2, 0xFFD700, 0.8);
+    panel.fillRoundedRect(panelX, panelY, panelWidth, panelHeight, 10);
+    panel.strokeRoundedRect(panelX, panelY, panelWidth, panelHeight, 10);
+
+    const title = this.add.text(GameConfig.WIDTH / 2, panelY + 12, '📋 今日挑战完成', {
+      fontFamily: 'monospace',
+      fontSize: '13px',
+      color: '#FFD700',
+      fontStyle: 'bold',
+    }).setOrigin(0.5, 0);
+
+    this.challengeDefs.forEach((def, i) => {
+      const y = panelY + 30 + i * 22;
+      this.add.text(panelX + 15, y, `${def.icon} ${def.name}`, {
+        fontFamily: 'monospace',
+        fontSize: '12px',
+        color: def.color,
+        fontStyle: 'bold',
+      });
+      this.add.text(panelX + 130, y, def.description, {
+        fontFamily: 'monospace',
+        fontSize: '11px',
+        color: '#CCCCCC',
+      });
+      this.add.text(panelX + panelWidth - 30, y, '✅', {
+        fontSize: '12px',
+      });
+    });
+  }
+
   private createButtons(): void {
     this.restartButton = this.add.text(
       GameConfig.WIDTH / 2,
-      370,
+      this.challengeDefs.length > 0 ? 410 : 370,
       '再来一次',
       {
         fontFamily: 'monospace',
@@ -189,7 +234,7 @@ export class GameOverScene extends Phaser.Scene {
 
     this.menuButton = this.add.text(
       GameConfig.WIDTH / 2,
-      420,
+      this.challengeDefs.length > 0 ? 450 : 420,
       '返回菜单',
       {
         fontFamily: 'monospace',

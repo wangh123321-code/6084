@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GameConfig, COLORS } from '../game/GameConfig';
 import { Storage } from '../utils/Storage';
 import { soundManager } from '../utils/SoundManager';
+import { ChallengeManager } from '../utils/ChallengeManager';
 
 export class StartScene extends Phaser.Scene {
   private titleText: Phaser.GameObjects.Text | null = null;
@@ -19,6 +20,7 @@ export class StartScene extends Phaser.Scene {
     this.createBackground();
     this.createTitle();
     this.createPlayerPreview();
+    this.createDailyChallenge();
     this.createHighScore();
     this.createStartButton();
     this.createControlsHint();
@@ -79,10 +81,58 @@ export class StartScene extends Phaser.Scene {
     (this.playerPreview as any).play('preview_run');
   }
 
+  private createDailyChallenge(): void {
+    const activeDefs = ChallengeManager.getActiveDefs();
+
+    const panelX = GameConfig.WIDTH / 2;
+    const panelY = 275;
+
+    const panel = this.add.graphics();
+    panel.fillStyle(0x1A1A2E, 0.85);
+    panel.lineStyle(2, 0xFFD700, 0.8);
+    const panelWidth = 360;
+    const panelHeight = activeDefs.length > 0 ? 55 + activeDefs.length * 22 : 45;
+    panel.fillRoundedRect(panelX - panelWidth / 2, panelY - panelHeight / 2, panelWidth, panelHeight, 10);
+    panel.strokeRoundedRect(panelX - panelWidth / 2, panelY - panelHeight / 2, panelWidth, panelHeight, 10);
+
+    const label = this.add.text(panelX, panelY - panelHeight / 2 + 12, '📋 每日挑战', {
+      fontFamily: 'monospace',
+      fontSize: '14px',
+      color: '#FFD700',
+      fontStyle: 'bold',
+    }).setOrigin(0.5, 0);
+
+    activeDefs.forEach((def, i) => {
+      const y = panelY - panelHeight / 2 + 30 + i * 22;
+      const icon = this.add.text(panelX - panelWidth / 2 + 20, y, def.icon, {
+        fontSize: '14px',
+      });
+      const name = this.add.text(panelX - panelWidth / 2 + 42, y, def.name, {
+        fontFamily: 'monospace',
+        fontSize: '13px',
+        color: def.color,
+        fontStyle: 'bold',
+      });
+      const desc = this.add.text(panelX - panelWidth / 2 + 110, y, def.description, {
+        fontFamily: 'monospace',
+        fontSize: '12px',
+        color: '#CCCCCC',
+      });
+    });
+
+    if (activeDefs.length === 0) {
+      const noChallenge = this.add.text(panelX, panelY, '今日无特殊挑战', {
+        fontFamily: 'monospace',
+        fontSize: '13px',
+        color: '#888888',
+      }).setOrigin(0.5);
+    }
+  }
+
   private createHighScore(): void {
     const highScore = Storage.getHighScore();
 
-    this.highScoreText = this.add.text(GameConfig.WIDTH / 2, 280, '', {
+    this.highScoreText = this.add.text(GameConfig.WIDTH / 2, 330, '', {
       fontFamily: 'monospace',
       fontSize: '20px',
       color: '#FFD700',
@@ -102,7 +152,7 @@ export class StartScene extends Phaser.Scene {
   }
 
   private createStartButton(): void {
-    this.startButton = this.add.text(GameConfig.WIDTH / 2, 330, '开始游戏', {
+    this.startButton = this.add.text(GameConfig.WIDTH / 2, 375, '开始游戏', {
       fontFamily: 'monospace',
       fontSize: '28px',
       color: '#FFFFFF',
@@ -137,7 +187,7 @@ export class StartScene extends Phaser.Scene {
   }
 
   private createControlsHint(): void {
-    const hint = this.add.text(GameConfig.WIDTH / 2, 400, '按 空格键 或 点击屏幕 跳跃', {
+    const hint = this.add.text(GameConfig.WIDTH / 2, 430, '按 空格键 或 点击屏幕 跳跃', {
       fontFamily: 'monospace',
       fontSize: '16px',
       color: '#FFFFFF',

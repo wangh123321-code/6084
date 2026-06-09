@@ -6,6 +6,7 @@ import { PowerUpPool, PowerUp } from '../game/PowerUp';
 import { Background, GroundPhysics } from '../game/Background';
 import { Storage } from '../utils/Storage';
 import { soundManager } from '../utils/SoundManager';
+import { ChallengeManager, ChallengeModifiers, ChallengeDef } from '../utils/ChallengeManager';
 
 export class GameScene extends Phaser.Scene {
   private player: Player | null = null;
@@ -37,6 +38,9 @@ export class GameScene extends Phaser.Scene {
 
   private lastTime: number = 0;
   private isMuted: boolean = false;
+  private challengeMods: ChallengeModifiers = ChallengeManager.getModifiers();
+  private activeChallengeDefs: ChallengeDef[] = ChallengeManager.getActiveDefs();
+  private challengeIndicator: Phaser.GameObjects.Text | null = null;
 
   constructor() {
     super('GameScene');
@@ -64,16 +68,16 @@ export class GameScene extends Phaser.Scene {
       score: 0,
       highScore: Storage.getHighScore(),
       lives: GameConfig.INITIAL_LIVES,
-      speed: GameConfig.INITIAL_SPEED,
+      speed: GameConfig.INITIAL_SPEED * this.challengeMods.speedMul,
       isBoost: false,
       isGameOver: false,
       isPaused: false,
     };
     this.distance = 0;
     this.obstacleTimer = 0;
-    this.obstacleInterval = GameConfig.INITIAL_OBSTACLE_INTERVAL;
+    this.obstacleInterval = GameConfig.INITIAL_OBSTACLE_INTERVAL * this.challengeMods.obstacleIntervalMul;
     this.powerUpTimer = 0;
-    this.powerUpInterval = GameConfig.POWERUP_SPAWN_INTERVAL;
+    this.powerUpInterval = GameConfig.POWERUP_SPAWN_INTERVAL * this.challengeMods.powerUpIntervalMul;
     this.boostTimer = 0;
   }
 
@@ -155,7 +159,7 @@ export class GameScene extends Phaser.Scene {
 
   private activateBoost(): void {
     this.gameState.isBoost = true;
-    this.boostTimer = GameConfig.POWERUP_SHOE_DURATION;
+    this.boostTimer = GameConfig.POWERUP_SHOE_DURATION * this.challengeMods.boostDurationMul;
     this.showBoostIndicator(true);
   }
 
@@ -208,6 +212,22 @@ export class GameScene extends Phaser.Scene {
     this.boostIndicator.setStroke('#000000', 3);
     this.boostIndicator.setDepth(100);
     this.boostIndicator.setVisible(false);
+
+    this.createChallengeHUD();
+  }
+
+  private createChallengeHUD(): void {
+    if (this.activeChallengeDefs.length === 0) return;
+
+    const labels = this.activeChallengeDefs.map(d => `${d.icon}${d.name}`).join(' ');
+    this.challengeIndicator = this.add.text(GameConfig.WIDTH / 2, GameConfig.HEIGHT - 20, labels, {
+      fontFamily: 'monospace',
+      fontSize: '12px',
+      color: '#FFD700',
+    }).setOrigin(0.5);
+    this.challengeIndicator.setStroke('#000000', 2);
+    this.challengeIndicator.setDepth(100);
+    this.challengeIndicator.setAlpha(0.7);
   }
 
   private updateLivesDisplay(): void {
@@ -280,16 +300,17 @@ export class GameScene extends Phaser.Scene {
       ? GameConfig.SPEED_INCREMENT * 2
       : GameConfig.SPEED_INCREMENT;
 
+    const maxSpd = GameConfig.MAX_SPEED * this.challengeMods.speedMul;
     const targetSpeed = Math.min(
-      GameConfig.INITIAL_SPEED + (this.distance / 10) * speedIncrement,
-      this.gameState.isBoost ? GameConfig.MAX_SPEED * 1.5 : GameConfig.MAX_SPEED
+      GameConfig.INITIAL_SPEED * this.challengeMods.speedMul + (this.distance / 10) * speedIncrement,
+      this.gameState.isBoost ? maxSpd * 1.5 : maxSpd
     );
 
     this.gameState.speed += (targetSpeed - this.gameState.speed) * 0.01;
   }
 
   private updateDistance(delta: number): void {
-    this.distance += (this.gameState.speed * delta) / 1000;
+    this.distance += (this.gameState.speed * delta * this.challengeMods.scoreMul) / 1000;
     this.gameState.score = Math.floor(this.distance);
   }
 
@@ -346,11 +367,13 @@ export class GameScene extends Phaser.Scene {
   private updateDifficulty(): void {
     const progress = Math.min(this.distance / 1000, 1);
     this.obstacleInterval =
-      GameConfig.INITIAL_OBSTACLE_INTERVAL -
-      progress * (GameConfig.INITIAL_OBSTACLE_INTERVAL - GameConfig.MIN_OBSTACLE_INTERVAL);
+      (GameConfig.INITIAL_OBSTACLE_INTERVAL -
+      progress * (GameConfig.INITIAL_OBSTACLE_INTERVAL - GameConfig.MIN_OBSTACLE_INTERVAL))
+      * this.challengeMods.obstacleIntervalMul;
     this.powerUpInterval =
-      GameConfig.POWERUP_SPAWN_INTERVAL -
-      progress * (GameConfig.POWERUP_SPAWN_INTERVAL - GameConfig.MIN_POWERUP_SPAWN_INTERVAL);
+      (GameConfig.POWERUP_SPAWN_INTERVAL -
+      progress * (GameConfig.POWERUP_SPAWN_INTERVAL - GameConfig.MIN_POWERUP_SPAWN_INTERVAL))
+      * this.challengeMods.powerUpIntervalMul;
   }
 
   private gameOver(): void {
@@ -374,6 +397,7 @@ export class GameScene extends Phaser.Scene {
         highScore: this.gameState.highScore,
         isNewHighScore,
         isMuted: this.isMuted,
+        challengeDefs: this.activeChallengeDefs,
       });
     });
   }
