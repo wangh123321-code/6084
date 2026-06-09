@@ -127,17 +127,21 @@ export class GroundPhysics {
   private createGround(): void {
     this.ground = this.scene.physics.add.staticGroup();
 
-    const groundBody = this.ground.create(
+    const groundRect = this.scene.add.rectangle(
       GameConfig.WIDTH / 2,
-      GameConfig.GROUND_Y + 40,
-      null as any
-    ) as Phaser.Physics.Arcade.Sprite;
+      GameConfig.GROUND_Y + 20,
+      GameConfig.WIDTH * 2,
+      40,
+      0x000000,
+      0
+    );
+    this.ground.add(groundRect);
+    this.scene.physics.add.existing(groundRect, true);
 
-    groundBody.setVisible(false);
-    const body = groundBody.body as Phaser.Physics.Arcade.StaticBody;
-    body.setSize(GameConfig.WIDTH * 2, 80);
-    body.setOffset(-GameConfig.WIDTH / 2, -40);
-    groundBody.refreshBody();
+    const body = groundRect.body as Phaser.Physics.Arcade.StaticBody;
+    body.setSize(GameConfig.WIDTH * 2, 40);
+    body.setOffset(-GameConfig.WIDTH, -20);
+    body.updateFromGameObject();
   }
 
   getGroup(): Phaser.Physics.Arcade.StaticGroup {

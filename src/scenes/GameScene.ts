@@ -248,6 +248,11 @@ export class GameScene extends Phaser.Scene {
 
     const actualDelta = Math.min(delta, 50);
 
+    if (this.player && this.player.y > GameConfig.HEIGHT + 50) {
+      this.gameOver();
+      return;
+    }
+
     this.updateGameSpeed(actualDelta);
     this.updateDistance(actualDelta);
     this.updateObstacleSpawn(actualDelta);

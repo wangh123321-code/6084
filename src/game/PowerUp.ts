@@ -28,20 +28,18 @@ export class PowerUp extends Phaser.Physics.Arcade.Sprite {
   }
 
   private createParticles(): void {
-    const particleCanvas = document.createElement('canvas');
-    particleCanvas.width = 6;
-    particleCanvas.height = 6;
-    const particleCtx = particleCanvas.getContext('2d')!;
-    particleCtx.fillStyle = '#FFD700';
-    particleCtx.fillRect(0, 0, 6, 6);
-
-    try {
-      (this.scene.textures as any).addImage(`powerup_particle_${this.powerUpType}`, particleCanvas as any);
-    } catch {
-      // Texture might exist
+    const key = `powerup_particle_${this.powerUpType}`;
+    if (!this.scene.textures.exists(key)) {
+      const particleCanvas = document.createElement('canvas');
+      particleCanvas.width = 6;
+      particleCanvas.height = 6;
+      const particleCtx = particleCanvas.getContext('2d')!;
+      particleCtx.fillStyle = '#FFD700';
+      particleCtx.fillRect(0, 0, 6, 6);
+      (this.scene.textures as any).addImage(key, particleCanvas as any);
     }
 
-    this.collectParticles = this.scene.add.particles(0, 0, `powerup_particle_${this.powerUpType}`, {
+    this.collectParticles = this.scene.add.particles(0, 0, key, {
       speed: { min: 50, max: 150 },
       angle: { min: 0, max: 360 },
       scale: { start: 1, end: 0 },

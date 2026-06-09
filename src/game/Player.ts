@@ -43,17 +43,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   private createDustParticles(): void {
-    const dustCanvas = document.createElement('canvas');
-    dustCanvas.width = 8;
-    dustCanvas.height = 8;
-    const dustCtx = dustCanvas.getContext('2d')!;
-    dustCtx.fillStyle = 'rgba(200, 180, 160, 0.6)';
-    dustCtx.fillRect(0, 0, 8, 8);
-
-    try {
+    if (!this.scene.textures.exists('dust_particle')) {
+      const dustCanvas = document.createElement('canvas');
+      dustCanvas.width = 8;
+      dustCanvas.height = 8;
+      const dustCtx = dustCanvas.getContext('2d')!;
+      dustCtx.fillStyle = 'rgba(200, 180, 160, 0.6)';
+      dustCtx.fillRect(0, 0, 8, 8);
       (this.scene.textures as any).addImage('dust_particle', dustCanvas as any);
-    } catch {
-      // Texture might already exist
     }
 
     this.dustParticles = this.scene.add.particles(0, 0, 'dust_particle', {
