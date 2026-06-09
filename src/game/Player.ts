@@ -62,6 +62,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       quantity: 0,
       gravityY: -50,
     });
+    this.dustParticles.setDepth(11);
   }
 
   jump(): void {

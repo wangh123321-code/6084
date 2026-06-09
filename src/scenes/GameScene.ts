@@ -31,6 +31,8 @@ export class GameScene extends Phaser.Scene {
 
   private obstacleTimer: number = 0;
   private obstacleInterval: number = GameConfig.INITIAL_OBSTACLE_INTERVAL;
+  private powerUpTimer: number = 0;
+  private powerUpInterval: number = GameConfig.POWERUP_SPAWN_INTERVAL;
   private distance: number = 0;
 
   private lastTime: number = 0;
@@ -70,6 +72,8 @@ export class GameScene extends Phaser.Scene {
     this.distance = 0;
     this.obstacleTimer = 0;
     this.obstacleInterval = GameConfig.INITIAL_OBSTACLE_INTERVAL;
+    this.powerUpTimer = 0;
+    this.powerUpInterval = GameConfig.POWERUP_SPAWN_INTERVAL;
     this.boostTimer = 0;
   }
 
@@ -256,7 +260,7 @@ export class GameScene extends Phaser.Scene {
     this.updateGameSpeed(actualDelta);
     this.updateDistance(actualDelta);
     this.updateObstacleSpawn(actualDelta);
-    this.updatePowerUpSpawn();
+    this.updatePowerUpSpawn(actualDelta);
     this.updateBoost(actualDelta);
 
     this.background?.update(this.gameState.speed, actualDelta, this.gameState.isBoost);
@@ -298,8 +302,12 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private updatePowerUpSpawn(): void {
-    this.powerUpPool?.trySpawn();
+  private updatePowerUpSpawn(delta: number): void {
+    this.powerUpTimer += delta;
+    if (this.powerUpTimer >= this.powerUpInterval) {
+      this.powerUpPool?.trySpawn();
+      this.powerUpTimer = 0;
+    }
   }
 
   private updateBoost(delta: number): void {
@@ -340,6 +348,9 @@ export class GameScene extends Phaser.Scene {
     this.obstacleInterval =
       GameConfig.INITIAL_OBSTACLE_INTERVAL -
       progress * (GameConfig.INITIAL_OBSTACLE_INTERVAL - GameConfig.MIN_OBSTACLE_INTERVAL);
+    this.powerUpInterval =
+      GameConfig.POWERUP_SPAWN_INTERVAL -
+      progress * (GameConfig.POWERUP_SPAWN_INTERVAL - GameConfig.MIN_POWERUP_SPAWN_INTERVAL);
   }
 
   private gameOver(): void {

@@ -24,6 +24,7 @@ export class PowerUp extends Phaser.Physics.Arcade.Sprite {
 
     this.setActive(false);
     this.setVisible(false);
+    this.setDepth(8);
     this.createParticles();
   }
 
@@ -47,6 +48,7 @@ export class PowerUp extends Phaser.Physics.Arcade.Sprite {
       lifespan: 400,
       quantity: 0,
     });
+    this.collectParticles.setDepth(9);
   }
 
   spawn(x: number, y: number): void {
@@ -163,10 +165,8 @@ export class PowerUpPool {
   }
 
   trySpawn(): PowerUp | null {
-    if (Math.random() > GameConfig.POWERUP_SPAWN_CHANCE) return null;
-
     const types: PowerUpType[] = ['shoe', 'watch'];
-    const weights = [0.7, 0.3];
+    const weights = [0.85, 0.15];
 
     let rand = Math.random();
     let typeIndex = 0;
@@ -182,7 +182,7 @@ export class PowerUpPool {
     const powerUp = this.getPowerUp(type);
     if (powerUp) {
       const config = POWERUP_CONFIGS[type];
-      const y = GameConfig.GROUND_Y - 40 - Math.random() * 80;
+      const y = GameConfig.GROUND_Y - 60 - Math.random() * 60;
       powerUp.spawn(GameConfig.WIDTH + 50, y);
     }
     return powerUp;

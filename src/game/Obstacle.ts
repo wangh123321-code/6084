@@ -20,6 +20,7 @@ export class Obstacle extends Phaser.Physics.Arcade.Sprite {
 
     this.setActive(false);
     this.setVisible(false);
+    this.setDepth(8);
   }
 
   spawn(x: number, y: number): void {
